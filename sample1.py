@@ -38,7 +38,7 @@ class PygeonSearch(unittest.TestCase):
         assert "No results found." not in driver.page_source
         for pref in self.pref_list.keys():
             # self.logging.info(pref)
-            self.logging('', pref)
+            self.logging(pref)
 
     def my_log(data):
         self.logging.info(data)
