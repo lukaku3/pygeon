@@ -8,6 +8,9 @@ import pprint
 import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Pool
 from bs4 import BeautifulSoup
@@ -27,6 +30,7 @@ class MakeList(unittest.TestCase):
         self.driver = webdriver.Remote(
             command_executor='http://localhost:4444/wd/hub',
             desired_capabilities=DesiredCapabilities.CHROME)
+        # self.driver.implicitly_wait(5)
         # self.driver = webdriver.Chrome('./chromedriver-Windows')
         self.logging = logging.getLogger('LoggingTest')
         self.logging.setLevel(10)
@@ -53,23 +57,28 @@ class MakeList(unittest.TestCase):
                     iframe = driver.find_element_by_id('fancybox-frame')
                     driver.switch_to_frame(iframe)
                     print(city["id"])
-                    driver.find_element_by_id(city['id']).click()
+                    driver.find_element_by_id(city['id']).click() # 市区町村をclick
                     next_page = 1
                     if ( city_cnt % self.city_cnt_limit != 0 ):
-                        print(city_cnt)
                         continue
                     else:
-                        print('click')
-                        driver.find_element_by_css_selector('body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE').click()
-                        time.sleep(3)
-                        # div.pagination.align-center
-                        paginate = driver.find_element_by_css_selector('div.pagination.align-center')
-                        pprint.pprint(paginate.text)
-                        # div#listArea > table
+                        driver.find_element_by_css_selector('body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE').click() # 検索btnをクリック
+                        # driver.switch_to.default_content()
+                        elem = driver.get(driver.current_url) # 区の表者一覧ページを取得
+                        time.sleep(5)
+                        driver.find_element_by_id('all_check').click()
+                        driver.save_screenshot('./aaa.png')
+
+                        # elem = driver.find_element_by_id('listArea')
+                        self.logging.info(driver.page_source)
+                        # req = requests.get(driver.current_url) # 業者一覧
+                        # soup = BeautifulSoup(req.text, "lxml")
+                        # soup = BeautifulSoup(req.text, "html.parser")
+                        # for i in soup.find_all("table"): # 全inputをリストへ格納
+
+
                         break
                     time.sleep(3)
-                    
-
 
     def tearDown(self):
 #        self.driver.close()
