@@ -70,10 +70,12 @@ class MakeList(unittest.TestCase):
                         driver.save_screenshot('./aaa.png')
 
                         # elem = driver.find_element_by_id('listArea')
-                        self.logging.info(driver.page_source)
+                        # self.logging.info()
                         # req = requests.get(driver.current_url) # 業者一覧
-                        # soup = BeautifulSoup(req.text, "lxml")
-                        # soup = BeautifulSoup(req.text, "html.parser")
+                        soup = BeautifulSoup(driver.page_source, "lxml")
+                        listArea = soup.select('#listArea')
+                        # div > a.button.button-rounded.PIE:nth-child(1) # linkBtn
+                        # print(soup.find('span'))
                         # for i in soup.find_all("table"): # 全inputをリストへ格納
 
 
