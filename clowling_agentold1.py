@@ -54,7 +54,6 @@ class MakeList(unittest.TestCase):
                 time.sleep(3)
                 city_cnt = 0 # 最大５つまでチェック（市区町村）
                 for city in url['city']:
-                    li_next_flg = False
                     dialog_elem = driver.get( self.base_url % url['id'] )
                     city_cnt += 1
                     iframe = driver.find_element_by_id('fancybox-frame')
@@ -72,33 +71,40 @@ class MakeList(unittest.TestCase):
                             json_dta = {}
                             # driver.switch_to.default_content()
                             driver.get(driver.current_url) # 区の表者一覧ページを取得
+                            print(driver.current_url)
                             time.sleep(2)
                             Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
                             time.sleep(3)
-                        #
-                        #     driver.find_element_by_id('all_check').click()
-                        #     driver.save_screenshot('./aaa%s.png' % wc)
+
+                            driver.find_element_by_id('all_check').click()
+                            driver.save_screenshot('./screenshots/aaa%s.png' % wc)
                             soup = BeautifulSoup(driver.page_source, "lxml")
-                        #     area = soup.find('span').string
-                        #
-                        #     # for a in soup.select('h3 > a'):
-                        #     #     json_dta['area'] = area
-                        #     #     json_dta['href'] = a.get('href')
-                        #     #     self.logging.info(json.dumps(json_dta))
-                        #
+                            area = soup.find('span').string
+
+                            # for t in soup.select('table'):
+                            #     json_dta['area'] = area
+                            #     tenant = t.find('h3')
+                            #     if( tenant.find('a') ):
+                            #         json_dta['tenant'] = tenant.find('a').string
+                            #         json_dta['href'] = tenant.find('a').get('href')
+                            #     else:
+                            #         json_dta['tenane'] = tenant.string
+                            #         json_dta['href'] = ''
+                            #     json_dta['attr'] = t.find_all('td')[3].get_text(' ', strip=True)
+                            #     self.logging.info(', '.join(json_dta.values()))
+
                             li_next = soup.select("li.next")
-                            print(li_next)
                             if(li_next is None):
-                                li_next_flg = True # 次ページ無ければ終了
+                                # li_next_flg = True # 次ページ無ければ終了
+                                break
                             else:
                                 wc += 1
                                 driver.find_element_by_css_selector('li.next > a').click()
 
-                        # else:
-                        #     pass
-                            # break
+                        else:
+                            pass
+                        #     break
                         # break
-                    pass
                     time.sleep(3)
 
     def tearDown(self):
