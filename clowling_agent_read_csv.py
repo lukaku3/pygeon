@@ -25,7 +25,7 @@ class MakeList(unittest.TestCase):
     pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川'}
     # url_json = 'pref11.json'
     url_json = 'sample.json'
-    agent_url_csv = 'agent_url.csv'
+    agent_csv = 'agent.csv'
     city_cnt_limit = 5
     iframe_id = 'fancybox-frame'
     # li_next = True
@@ -38,7 +38,7 @@ class MakeList(unittest.TestCase):
         # self.driver = webdriver.Chrome('./chromedriver-Windows')
         self.logging = logging.getLogger('LoggingTest')
         self.logging.setLevel(10)
-        fh = logging.FileHandler(self.agent_url_csv, delay=True, encoding='utf-8')
+        fh = logging.FileHandler(self.agent_csv, delay=True, encoding='utf-8')
 #        formatter = logging.Formatter('%(asctime)s - '
 #                              '%(levelname)s - '
 #                              '%(filename)s:%(lineno)d - '
@@ -58,12 +58,14 @@ class MakeList(unittest.TestCase):
                 # driver.find_element_by_css_selector('table.agentData')
                 # html = urllib3.urlopen(self.url % re.sub(r' ', '', row[1])
                 r = requests.get(self.url % re.sub(r' ', '', row[1]))
-                soup = BeautifulSoup(driver.page_source, "lxml")
-                # soup = BeautifulSoup(r.text, "lxml")
+                # soup = BeautifulSoup(driver.page_source, "lxml")
+                soup = BeautifulSoup(r.text, "lxml")
                 # tenant = soup.select('table.agentData > tbody > tr:nth-child(1) > td:nth-child(4)')
-                tbl = soup.find('table')
-                print(tbl)
-                #         area = soup.find('span').string
+                tbl = soup.select('table > tbody > tr > td')
+                row = []
+                row = [tbl[0],tbl[1],tbl[2],tbl[7],tbl[8]]
+                # self.logging.info( soup.table.find_all('td',string=True) )
+                self.logging.info( row )
 
 
 
