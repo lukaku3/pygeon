@@ -25,8 +25,9 @@ class MakeList(unittest.TestCase):
 
     def setUp(self):
         self.driver = webdriver.Remote(
-            command_executor='http://localhost:4444/wd/hub',
+           command_executor='http://localhost:4444/wd/hub',
             desired_capabilities=DesiredCapabilities.CHROME)
+#        self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(10)
 
     def setup_logger(self,filepath):
@@ -112,8 +113,12 @@ class MakeList(unittest.TestCase):
         driver.save_screenshot('./screenshots/aaa_.png')
         iframe = ''
         try:
-            iframe = driver.find_element_by_id('fancybox-frame')
-            driver.switch_to.frame(iframe)
+            #iframe = driver.find_element_by_id('#fancybox-frame')
+            #driver.switch_to.frame(iframe)
+            #driver.switch_to.frame(1)
+            iframe = driver.find_element_by_css_selector('#fancybox-frame')
+            driver.switch_to_frame(iframe)
+            driver.find_element_by_css_selector('#SYZ_13102').click()
         except OSError as err:
             print("OS error: {0}".format(err))
         except ValueError:
@@ -121,17 +126,17 @@ class MakeList(unittest.TestCase):
         except:
             print("Unexpected error:", sys.exc_info()[0])
             raise
-        
+
         for c in city_list:
-          
+
             driver.find_element_by_id(c).click() # 市区町村をclick
-        
+
         driver.switch_to_default_content()
 
 
 
     def tearDown(self):
-        self.driver.close()
+#        self.driver.close()
         pass
 
 if __name__ == "__main__":
