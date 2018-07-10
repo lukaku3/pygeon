@@ -82,7 +82,7 @@ class MakeList(unittest.TestCase):
         with open(self.pref_json, "r") as f:
             pref_json = json.load(f)
             for url in pref_json:
-                self.setup_logger('%s.csv' % url['id'])
+                self.setup_logger('tmp%s.csv' % url['id'])
 #                print( self.base_url % url['id'] )
                 driver.get( self.base_url % url['id'] )
                 time.sleep(2)
