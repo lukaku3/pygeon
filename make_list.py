@@ -4,6 +4,7 @@ import re
 import sys
 import logging
 import requests
+import pprint
 import json
 import time
 from PIL import Image
@@ -24,11 +25,14 @@ class MakeList(unittest.TestCase):
     city_max  = 5
     search_btn_css = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
     next_a = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
+    x = 1024
+    y = 768
 
     def setUp(self):
         self.driver = webdriver.Remote(
            command_executor='http://localhost:4444/wd/hub',
             desired_capabilities=DesiredCapabilities.CHROME)
+        self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
     def setup_logger(self,filepath):
@@ -72,7 +76,7 @@ class MakeList(unittest.TestCase):
     def test_scrape_fax(self):
         print('start scrape fax')
         driver = self.driver
-        self.setup_logger('test.log')
+        self.setup_logger(None)
         driver = self.driver
         with open(self.pref_json, "r") as f:
             pref_json = json.load(f)
@@ -86,7 +90,7 @@ class MakeList(unittest.TestCase):
                 city_idx = 0
                 for city in url['city']:
 
-                    # driver.get( self.base_url % url['id'] )
+                    driver.get( self.base_url % url['id'] )
                     if len(city_list) == self.city_max:
                         self.click_city(city_list)
 #                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
@@ -95,7 +99,6 @@ class MakeList(unittest.TestCase):
                         time.sleep(1)
                         # self.is_next_a()
                         self.collect_link()
-                        self.logging('1')
                         print('init city_list')
                         city_list = []
                     else:
@@ -146,7 +149,13 @@ class MakeList(unittest.TestCase):
         soup = BeautifulSoup(driver.page_source, "lxml")
         # for t in soup.find_all('table'):
         # logging('test')
-        print(driver.page_source)
+        #print(driver.page_source)
+        tbl = soup.find_all('table')
+        for t in tbl:
+            url = []
+            url.append(t.find('a').get('href'))
+            url.append(t.find('a').string)
+            self.logging.info(url)
 
         print('end collect_link')
         driver.save_screenshot('./screenshots/collect_link.png')
