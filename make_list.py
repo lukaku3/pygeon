@@ -29,7 +29,6 @@ class MakeList(unittest.TestCase):
         self.driver = webdriver.Remote(
            command_executor='http://localhost:4444/wd/hub',
             desired_capabilities=DesiredCapabilities.CHROME)
-#        self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(10)
 
     def setup_logger(self,filepath):
@@ -73,7 +72,7 @@ class MakeList(unittest.TestCase):
     def test_scrape_fax(self):
         print('start scrape fax')
         driver = self.driver
-        self.setup_logger(None)
+        self.setup_logger('test.log')
         driver = self.driver
         with open(self.pref_json, "r") as f:
             pref_json = json.load(f)
@@ -87,13 +86,17 @@ class MakeList(unittest.TestCase):
                 city_idx = 0
                 for city in url['city']:
 
-                    driver.get( self.base_url % url['id'] )
+                    # driver.get( self.base_url % url['id'] )
                     if len(city_list) == self.city_max:
-                        print("click")
                         self.click_city(city_list)
 #                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
 #                        time.sleep(2)
                         driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                        time.sleep(1)
+                        # self.is_next_a()
+                        self.collect_link()
+                        self.logging('1')
+                        print('init city_list')
                         city_list = []
                     else:
                         print("append:" + city['id'])
@@ -114,7 +117,6 @@ class MakeList(unittest.TestCase):
     def click_city(self, city_list):
         print(city_list)
         driver = self.driver
-        driver.save_screenshot('./screenshots/aaa_.png')
         iframe = driver.find_element_by_css_selector('#fancybox-frame')
         driver.switch_to_frame(iframe)
         for c in city_list:
@@ -123,20 +125,32 @@ class MakeList(unittest.TestCase):
         driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
         time.sleep(1)
         Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
-        time.sleep(1)
-        self.is_next_a()
         driver.switch_to_default_content()
 
     def is_next_a(self):
-        print("check_next_a")
+        print("start check_next_a")
         driver = self.driver
-        driver.switch_to_default_content()
+        # driver.switch_to_default_content()
         soup = BeautifulSoup(driver.page_source, "lxml")
         #next_tag = soup.select(self.next_a)
+        print(soup.find('ol').text)
         next_tag = soup.select('li.next > a')
         print(next_tag)
         pass
 
+    def collect_link(self):
+        print('start collect_link')
+        driver = self.driver
+        logging = self.logging
+        driver.switch_to_default_content()
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        # for t in soup.find_all('table'):
+        # logging('test')
+        print(driver.page_source)
+
+        print('end collect_link')
+        driver.save_screenshot('./screenshots/collect_link.png')
+        pass
 
     def tearDown(self):
 #        self.driver.close()
