@@ -12,16 +12,18 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Pool
 from bs4 import BeautifulSoup
+from selenium.webdriver.support.ui import Select
 
 class MakeList(unittest.TestCase):
 
-#    base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=13'
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
     pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川'}
     pref_json = 'pref.json'
     default_log = 'test.log'
     city_max  = 5
+    search_btn_css = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
+    next_a = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
 
     def setUp(self):
         self.driver = webdriver.Remote(
@@ -78,61 +80,62 @@ class MakeList(unittest.TestCase):
             for url in pref_json:
 #                print( self.base_url % url['id'] )
                 driver.get( self.base_url % url['id'] )
-#                print(url['id'])
                 time.sleep(2)
                 city_cnt = 0 # 最大５つまでチェック（市区町村）
 #                print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
                 city_list = []
+                city_idx = 0
                 for city in url['city']:
-#                    if len(city_list) == self.city_max:
-#                        self.click_city(city_list)
-#                        city_list = []
-#                    else:
-#                        city_list.append(city['id'])
 
-                    dialog_elem = driver.get( self.base_url % url['id'] )
-                    time.sleep(1)
-                    city_cnt += 1
-                    driver.save_screenshot('./aaa.png')
-                    iframe = driver.find_element_by_id('fancybox-frame')
-                    driver.switch_to.frame(iframe)
-                    driver.find_element_by_id(city['id']).click() # 市区町村をclick
-                    next_page = 1
-                    if ( city_cnt % self.city_cnt_limit != 0 ):
-                        continue
-                    elif( city_cnt == len(url['city'])):
-                        pass
+                    driver.get( self.base_url % url['id'] )
+                    if len(city_list) == self.city_max:
+                        print("click")
+                        self.click_city(city_list)
+#                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+#                        time.sleep(2)
+                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                        city_list = []
                     else:
-                        driver.find_element_by_css_selector('body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE').click() # 検索btnをクリック
-                        wc = 0
+                        print("append:" + city['id'])
+                        city_list.append(city['id'])
+
+                    city_idx += 1
+                if len(city_list) > 0:
+                        print("click")
+                        self.click_city(city_list)
+#                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+#                        time.sleep(2)
+                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                        city_list = []
+
+
         pass
 
     def click_city(self, city_list):
         print(city_list)
         driver = self.driver
         driver.save_screenshot('./screenshots/aaa_.png')
-        iframe = ''
-        try:
-            #iframe = driver.find_element_by_id('#fancybox-frame')
-            #driver.switch_to.frame(iframe)
-            #driver.switch_to.frame(1)
-            iframe = driver.find_element_by_css_selector('#fancybox-frame')
-            driver.switch_to_frame(iframe)
-            driver.find_element_by_css_selector('#SYZ_13102').click()
-        except OSError as err:
-            print("OS error: {0}".format(err))
-        except ValueError:
-            print("Could not convert data to an integer.")
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            raise
-
+        iframe = driver.find_element_by_css_selector('#fancybox-frame')
+        driver.switch_to_frame(iframe)
         for c in city_list:
-
             driver.find_element_by_id(c).click() # 市区町村をclick
 
+        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+        time.sleep(1)
+        Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
+        time.sleep(1)
+        self.is_next_a()
         driver.switch_to_default_content()
 
+    def is_next_a(self):
+        print("check_next_a")
+        driver = self.driver
+        driver.switch_to_default_content()
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        #next_tag = soup.select(self.next_a)
+        next_tag = soup.select('li.next > a')
+        print(next_tag)
+        pass
 
 
     def tearDown(self):
