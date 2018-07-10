@@ -23,7 +23,8 @@ class MakeList(unittest.TestCase):
     pref_json = 'pref.json'
     default_log = 'test.log'
     city_max  = 5
-    search_btn_css = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
+    css_search_btn = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
+    css_next_link = 'div.pagination.align-center > ol > li.next > a'
     next_a = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
     x = 1024
     y = 768
@@ -76,11 +77,12 @@ class MakeList(unittest.TestCase):
     def test_scrape_fax(self):
         print('start scrape fax')
         driver = self.driver
-        self.setup_logger(None)
+        # self.setup_logger(None)
         driver = self.driver
         with open(self.pref_json, "r") as f:
             pref_json = json.load(f)
             for url in pref_json:
+                self.setup_logger('%s.csv' % url['id'])
 #                print( self.base_url % url['id'] )
                 driver.get( self.base_url % url['id'] )
                 time.sleep(2)
@@ -89,15 +91,13 @@ class MakeList(unittest.TestCase):
                 city_list = []
                 city_idx = 0
                 for city in url['city']:
-
                     driver.get( self.base_url % url['id'] )
                     if len(city_list) == self.city_max:
                         self.click_city(city_list)
-#                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+#                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
 #                        time.sleep(2)
                         driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                         time.sleep(1)
-                        # self.is_next_a()
                         self.collect_link()
                         print('init city_list')
                         city_list = []
@@ -107,14 +107,12 @@ class MakeList(unittest.TestCase):
 
                     city_idx += 1
                 if len(city_list) > 0:
-                        print("click")
                         self.click_city(city_list)
-#                        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+#                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
 #                        time.sleep(2)
+                        self.collect_link()
                         driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                         city_list = []
-
-
         pass
 
     def click_city(self, city_list):
@@ -125,7 +123,7 @@ class MakeList(unittest.TestCase):
         for c in city_list:
             driver.find_element_by_id(c).click() # 市区町村をclick
 
-        driver.find_element_by_css_selector(self.search_btn_css).click() # 検索btnをクリック
+        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
         time.sleep(1)
         Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
         driver.switch_to_default_content()
@@ -133,33 +131,32 @@ class MakeList(unittest.TestCase):
     def is_next_a(self):
         print("start check_next_a")
         driver = self.driver
-        # driver.switch_to_default_content()
         soup = BeautifulSoup(driver.page_source, "lxml")
-        #next_tag = soup.select(self.next_a)
         print(soup.find('ol').text)
         next_tag = soup.select('li.next > a')
         print(next_tag)
         pass
 
     def collect_link(self):
-        print('start collect_link')
         driver = self.driver
         logging = self.logging
-        driver.switch_to_default_content()
+        # driver.switch_to_default_content()
         soup = BeautifulSoup(driver.page_source, "lxml")
-        # for t in soup.find_all('table'):
-        # logging('test')
-        #print(driver.page_source)
         tbl = soup.find_all('table')
         for t in tbl:
             url = []
             url.append(t.find('a').get('href'))
             url.append(t.find('a').string)
             self.logging.info(url)
-
-        print('end collect_link')
-        driver.save_screenshot('./screenshots/collect_link.png')
-        pass
+        else:
+            paginate = soup.select(self.css_next_link)
+            if paginate:
+                driver.find_element_by_css_selector(self.css_next_link).click()
+                time.sleep(2)
+                self.collect_link()
+            else:
+                print('not exists.')
+            pass
 
     def tearDown(self):
 #        self.driver.close()
