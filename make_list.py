@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
+import os
+import csv
 import re
 import sys
 import logging
@@ -18,10 +20,13 @@ from selenium.webdriver.support.ui import Select
 class MakeList(unittest.TestCase):
 
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
+    detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
     pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川'}
     pref_json = 'pref.json'
     default_log = 'test.log'
+    tmp_pref_csv = 'tmp%s.csv'
+    agent_csv    = 'agents%s.csv'
     city_max  = 5
     css_search_btn = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
     css_next_link = 'div.pagination.align-center > ol > li.next > a'
@@ -74,15 +79,15 @@ class MakeList(unittest.TestCase):
             pref_list_json.append(pref_json)
         self.logging.info(json.dumps(pref_list_json))
 
-    def test_scrape_fax(self):
-        print('start scrape fax')
+    def test_scrape_detail_link(self):
+        print('start scrape url')
         driver = self.driver
         # self.setup_logger(None)
         driver = self.driver
         with open(self.pref_json, "r") as f:
             pref_json = json.load(f)
             for url in pref_json:
-                self.setup_logger('tmp%s.csv' % url['id'])
+                self.setup_logger(self.tmp_pref_csv % url['id'])
 #                print( self.base_url % url['id'] )
                 driver.get( self.base_url % url['id'] )
                 time.sleep(2)
@@ -115,6 +120,39 @@ class MakeList(unittest.TestCase):
                         city_list = []
         pass
 
+    def test_scrape_agent(self):
+        print('start scrape fax')
+        driver = self.driver
+        # self.setup_logger(None)
+        for pref in self.pref_list:
+            driver.get( self.base_url % pref )
+            self.setup_logger(self.agent_csv % pref)
+
+            csv_path = self.tmp_pref_csv % pref
+            if os.path.exists(csv_path):
+                with open(csv_path,  newline='') as f:
+                    dataReader = csv.reader(f)
+                    for row in dataReader:
+                        print(row[0])
+                        driver.get( self.detail_url % row[0] )
+                        time.sleep(1)
+                        soup = BeautifulSoup(driver.page_source, "lxml")
+                        tbl = soup.find('table').find_all('td')
+                        detail = []
+                        detail.append(tbl[0])
+                        detail.append(tbl[1])
+                        detail.append(tbl[2])
+                        detail.append(tbl[7])
+                        detail.append(tbl[8])
+                        detail_str = ",".join(map(str,detail))
+                        self.logging.info( re.sub( r'<((/|)td|td\scolspan="2")>', '', detail_str) )
+                    else:
+                        f.close()
+            else:
+                print('%s is not exists.' % csv_path)
+                pass
+
+
     def click_city(self, city_list):
         print(city_list)
         driver = self.driver
@@ -128,14 +166,6 @@ class MakeList(unittest.TestCase):
         Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
         driver.switch_to_default_content()
 
-    def is_next_a(self):
-        print("start check_next_a")
-        driver = self.driver
-        soup = BeautifulSoup(driver.page_source, "lxml")
-        print(soup.find('ol').text)
-        next_tag = soup.select('li.next > a')
-        print(next_tag)
-        pass
 
     def collect_link(self):
         driver = self.driver
@@ -145,9 +175,11 @@ class MakeList(unittest.TestCase):
         tbl = soup.find_all('table')
         for t in tbl:
             url = []
-            url.append(t.find('a').get('href'))
-            url.append(t.find('a').string)
-            self.logging.info(url)
+            if t.find('a').string is not None:
+                url.append(t.find('a').get('href'))
+                url.append(t.find('a').string)
+                self.logging.info( ','.join(url) )
+
         else:
             paginate = soup.select(self.css_next_link)
             if paginate:
