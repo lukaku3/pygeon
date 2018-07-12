@@ -19,26 +19,30 @@ from selenium.webdriver.support.ui import Select
 
 class MakeList(unittest.TestCase):
 
+    selenium_server = 'http://192.168.33.1:4444/wd/hub'
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
-    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川'}
-    pref_json = 'pref.json'
+#    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
+    pref_list = {'12':'千葉'}
     default_log = 'test.log'
+    pref_json = 'pref.json'
+#    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
     city_max  = 5
     css_search_btn = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
     css_next_link = 'div.pagination.align-center > ol > li.next > a'
-    next_a = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
+    next_a1 = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
+    next_a2 = '#container > div.main.right > div:nth-child(7) > div:nth-child(1) > div > ol > li.next > a'
     x = 1024
     y = 768
 
     def setUp(self):
         self.driver = webdriver.Remote(
-           command_executor='http://localhost:4444/wd/hub',
+           command_executor= self.selenium_server,
             desired_capabilities=DesiredCapabilities.CHROME)
-        self.driver.set_window_size(self.x, self.y)
+#        self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
     def setup_logger(self,filepath):
@@ -57,11 +61,12 @@ class MakeList(unittest.TestCase):
 
     def test_make_list(self):
         print('start make pref.json')
-        self.setup_logger(None)
         driver = self.driver
-        driver.get(self.base_url) # 最初、のページを開く
         pref_list_json = []
+        self.setup_logger(self.pref_json)
         for pref in self.pref_list.keys():
+#            self.setup_logger(self.pref_json % pref) #pref.jsonを分けたい場合。2行前のsetup_loggerを要コメントアウト
+            driver.get(self.base_url % pref ) # 最初、のページを開く
             pref_json = {}
             pref_json['id'] = pref
             pref_json['name'] = self.pref_list[pref]
@@ -97,6 +102,8 @@ class MakeList(unittest.TestCase):
                 city_idx = 0
                 for city in url['city']:
                     driver.get( self.base_url % url['id'] )
+                    print("append:" + city['id'])
+                    city_list.append(city['id'])
                     if len(city_list) == self.city_max:
                         self.click_city(city_list)
 #                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
@@ -106,9 +113,9 @@ class MakeList(unittest.TestCase):
                         self.collect_link()
                         print('init city_list')
                         city_list = []
-                    else:
-                        print("append:" + city['id'])
-                        city_list.append(city['id'])
+#                    else:
+#                        print("append:" + city['id'])
+#                        city_list.append(city['id'])
 
                     city_idx += 1
                 if len(city_list) > 0:
@@ -145,7 +152,7 @@ class MakeList(unittest.TestCase):
                         detail.append(tbl[7])
                         detail.append(tbl[8])
                         detail_str = ",".join(map(str,detail))
-                        self.logging.info( re.sub( r'<((/|)td|td\scolspan="2")>', '', detail_str) )
+                        self.logging.info( re.sub( r'<((/|)td|td\scolspan="[0-9]")>', '', detail_str) )
                     else:
                         f.close()
             else:
@@ -171,6 +178,7 @@ class MakeList(unittest.TestCase):
         driver = self.driver
         logging = self.logging
         # driver.switch_to_default_content()
+        time.sleep(1)
         soup = BeautifulSoup(driver.page_source, "lxml")
         tbl = soup.find_all('table')
         for t in tbl:
@@ -179,19 +187,27 @@ class MakeList(unittest.TestCase):
                 url.append(t.find('a').get('href'))
                 url.append(t.find('a').string)
                 self.logging.info( ','.join(url) )
+#            url.append(t.find('a').get('href'))
+#            if t.find('a').string:
+#                url.append(t.find('a').string)
+#                self.logging.info( ','.join(url) )
 
         else:
             paginate = soup.select(self.css_next_link)
             if paginate:
-                driver.find_element_by_css_selector(self.css_next_link).click()
-                time.sleep(2)
+                time.sleep(1)
+#                driver.find_element_by_css_selector(self.css_next_link).click()
+                try:
+                    driver.find_element_by_css_selector(self.css_next_link).click()
+                except OSError as err:
+                    print("OS error: {0}".format(err))
                 self.collect_link()
             else:
-                print('not exists.')
+                print('next-link is not exists.')
             pass
 
     def tearDown(self):
-#        self.driver.close()
+        self.driver.close()
         pass
 
 if __name__ == "__main__":
