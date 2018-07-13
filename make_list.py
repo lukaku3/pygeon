@@ -24,9 +24,9 @@ class MakeList(unittest.TestCase):
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
-    pref_list = {'12':'千葉'}
+    pref_list = {'13':'東京','11':'埼玉','14':'神奈川','27':'大阪'}
     default_log = 'test.log'
-    pref_json = 'pref.json'
+    pref_json = 'pref%s.json'
 #    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
@@ -63,9 +63,8 @@ class MakeList(unittest.TestCase):
         print('start make pref.json')
         driver = self.driver
         pref_list_json = []
-        self.setup_logger(self.pref_json)
         for pref in self.pref_list.keys():
-#            self.setup_logger(self.pref_json % pref) #pref.jsonを分けたい場合。2行前のsetup_loggerを要コメントアウト
+            self.setup_logger(self.pref_json % pref)
             driver.get(self.base_url % pref ) # 最初、のページを開く
             pref_json = {}
             pref_json['id'] = pref
@@ -82,6 +81,7 @@ class MakeList(unittest.TestCase):
                 city['count']  = re.sub(r'\D', '', i.find('label').string)
                 pref_json['city'].append(city)
             pref_list_json.append(pref_json)
+            time.sleep(1)
         self.logging.info(json.dumps(pref_list_json))
 
     def test_scrape_detail_link(self):
@@ -89,42 +89,47 @@ class MakeList(unittest.TestCase):
         driver = self.driver
         # self.setup_logger(None)
         driver = self.driver
-        with open(self.pref_json, "r") as f:
-            pref_json = json.load(f)
-            for url in pref_json:
-                self.setup_logger(self.tmp_pref_csv % url['id'])
-#                print( self.base_url % url['id'] )
-                driver.get( self.base_url % url['id'] )
-                time.sleep(2)
-                city_cnt = 0 # 最大５つまでチェック（市区町村）
-#                print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
-                city_list = []
-                city_idx = 0
-                for city in url['city']:
-                    driver.get( self.base_url % url['id'] )
-                    print("append:" + city['id'])
-                    city_list.append(city['id'])
-                    if len(city_list) == self.city_max:
-                        self.click_city(city_list)
-#                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                        time.sleep(2)
-#                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
-                        time.sleep(1)
-                        self.collect_link()
-                        print('init city_list')
+        for pref in self.pref_list:
+            fpath = self.pref_json % pref #　県別 市区町村を読む
+            if os.path.exists(fpath):
+                with open(fpath, "r") as f:
+                    pref_json = json.load(f)
+                    for url in pref_json:
+                        self.setup_logger(self.tmp_pref_csv % url['id'])
+#                        print( self.base_url % url['id'] )
+                        driver.get( self.base_url % url['id'] )
+                        time.sleep(2)
+                        city_cnt = 0 # 最大５つまでチェック（市区町村）
+#                        print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
                         city_list = []
-#                    else:
-#                        print("append:" + city['id'])
-#                        city_list.append(city['id'])
-                    city_idx += 1
-                if len(city_list) > 0:
-                        self.click_city(city_list)
-#                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                        time.sleep(2)
-                        self.collect_link()
-                        # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
-                        city_list = []
-        pass
+                        city_idx = 0
+                        for city in url['city']:
+                            driver.get( self.base_url % url['id'] )
+                            print("append:" + city['id'])
+                            city_list.append(city['id'])
+                            if len(city_list) == self.city_max:
+                                self.click_city(city_list)
+#                                driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
+#                                time.sleep(2)
+#                                driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                                time.sleep(1)
+                                self.collect_link()
+                                print('init city_list')
+                                city_list = []
+#                            else:
+#                                print("append:" + city['id'])
+#                                city_list.append(city['id'])
+                            city_idx += 1
+                        if len(city_list) > 0:
+                                self.click_city(city_list)
+#                                driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
+#                                time.sleep(2)
+                                self.collect_link()
+                                # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                                city_list = []
+            else:
+                print('%s is not exists.' % csv_path)
+                pass
 
     def test_scrape_agent(self):
         print('start scrape fax')
