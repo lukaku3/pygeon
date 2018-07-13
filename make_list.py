@@ -19,15 +19,16 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Pool
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.options import Options
 
 class MakeList(unittest.TestCase):
 
-    selenium_server = 'http://192.168.33.1:4444/wd/hub'
+    selenium_server = 'http://localhost:4444/wd/hub'
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
-    pref_list = {'13':'東京','11':'埼玉','14':'神奈川','27':'大阪'}
+    pref_list = {'27':'大阪'}
     default_log = 'test.log'
 #    pref_json = 'pref.json'
     pref_json = 'pref11.json'
@@ -41,11 +42,19 @@ class MakeList(unittest.TestCase):
     next_a2 = '#container > div.main.right > div:nth-child(7) > div:nth-child(1) > div > ol > li.next > a'
     x = 1024
     y = 768
+    browser_path = '/usr/bin/google-chrome'
 
     def setUp(self):
-        self.driver = webdriver.Remote(
-           command_executor= self.selenium_server,
-            desired_capabilities=DesiredCapabilities.CHROME)
+#        self.driver = webdriver.Remote(
+#           command_executor= self.selenium_server,
+#            desired_capabilities=DesiredCapabilities.CHROME)
+        opts = Options()
+        opts.binary_location = self.browser_path
+        opts.add_argument('--headless')
+        opts.add_argument('--disable-gpu')
+        opts.add_argument('--no-sandbox')
+        self.driver = webdriver.Chrome(chrome_options=opts)
+
         self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
@@ -215,7 +224,7 @@ class MakeList(unittest.TestCase):
                     #driver.find_element_by_css_selector(self.css_next_link)
                     element = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, self.css_next_link)))
-                    element.click()                
+                    element.click()
                 except OSError as err:
                     print("OS error: {0}".format(err))
                 self.collect_link()
