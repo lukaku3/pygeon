@@ -31,7 +31,7 @@ class MakeList(unittest.TestCase):
     pref_list = {'12':'千葉','11':'埼玉','14':'神奈川','27':'大阪','13':'東京'}
     default_log = 'test.log'
 #    pref_json = 'pref.json'
-    pref_json = 'pref11.json'
+    pref_json = 'pref%s.json'
 #    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
@@ -78,6 +78,7 @@ class MakeList(unittest.TestCase):
         pref_list_json = []
         self.setup_logger(self.pref_json)
         for pref in self.pref_list.keys():
+            f = open(self.pref_json % pref,'a')
             driver.get(self.base_url % pref ) # 最初、のページを開く
             pref_json = {}
             pref_json['id'] = pref
@@ -96,9 +97,9 @@ class MakeList(unittest.TestCase):
 #                city['count']  = re.sub(r'\D', '', i.find('label').string)
                 pref_json['city'].append(city)
 
-            pref_list_json.append(pref_json)
             time.sleep(1)
-        self.logging.info(json.dumps(pref_list_json))
+            json.dump(pref_json, f)
+            f.close()
 
     def test_scrape_detail_link(self):
         print('start scrape url')
