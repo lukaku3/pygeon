@@ -26,7 +26,7 @@ class MakeList(unittest.TestCase):
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
     pref_list = {'13':'東京','11':'埼玉','14':'神奈川','27':'大阪'}
     default_log = 'test.log'
-    pref_json = 'pref%s.json'
+    pref_json = 'pref.json'
 #    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
@@ -63,8 +63,8 @@ class MakeList(unittest.TestCase):
         print('start make pref.json')
         driver = self.driver
         pref_list_json = []
+        self.setup_logger(self.pref_json)
         for pref in self.pref_list.keys():
-            self.setup_logger(self.pref_json % pref)
             driver.get(self.base_url % pref ) # 最初、のページを開く
             pref_json = {}
             pref_json['id'] = pref
@@ -73,13 +73,16 @@ class MakeList(unittest.TestCase):
             req = requests.get(self.dialog_url + pref) # 各dialogのページを開く
             soup = BeautifulSoup(req.text, "lxml")
             for i in soup.find_all("dt"): # 全inputをリストへ格納
+                if ( pref == "14" and re.match(r'(横浜|川崎)', i.find('label').string)) is None: # 神奈川は川崎と横浜
+                    continue
                 # jsonデータ準備
                 city = {}
                 city['id'] = i.find("input").get('id')
-                city['value'] = i.find("input").get('value')
-                city['name']  = re.sub( r'\(|\)|[0-9]+','', i.find('label').string)
-                city['count']  = re.sub(r'\D', '', i.find('label').string)
+#                city['value'] = i.find("input").get('value')
+#                city['name']  = re.sub( r'\(|\)|[0-9]+','', i.find('label').string)
+#                city['count']  = re.sub(r'\D', '', i.find('label').string)
                 pref_json['city'].append(city)
+
             pref_list_json.append(pref_json)
             time.sleep(1)
         self.logging.info(json.dumps(pref_list_json))
