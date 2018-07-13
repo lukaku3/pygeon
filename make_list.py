@@ -93,7 +93,7 @@ class MakeList(unittest.TestCase):
         # self.setup_logger(None)
         driver = self.driver
         for pref in self.pref_list:
-            fpath = self.pref_json % pref #　県別 市区町村を読む
+            fpath = self.pref_json #　県別 市区町村を読む
             if os.path.exists(fpath):
                 with open(fpath, "r") as f:
                     pref_json = json.load(f)
