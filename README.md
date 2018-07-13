@@ -14,8 +14,12 @@
 ## install python3.6.6
     $ pyenv install 3.6.6
 
-## download selenium, chromedriver
+## download selenium, chromedriver(linux)
     selenium-server-standalone-3.13.0.jar
+    chromedriver
+
+## start selenium-server
+    $ java -Dwebdriver.chrome.driver=chromedriver -jar selenium-server-standalone-3.13.0.jar
 
 ## make vitrtualenv dir
     $ virtualenv foobardir
