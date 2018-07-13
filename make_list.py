@@ -11,6 +11,9 @@ import json
 import time
 from PIL import Image
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Pool
@@ -26,7 +29,8 @@ class MakeList(unittest.TestCase):
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
     pref_list = {'13':'東京','11':'埼玉','14':'神奈川','27':'大阪'}
     default_log = 'test.log'
-    pref_json = 'pref.json'
+#    pref_json = 'pref.json'
+    pref_json = 'pref11.json'
 #    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
@@ -42,7 +46,7 @@ class MakeList(unittest.TestCase):
         self.driver = webdriver.Remote(
            command_executor= self.selenium_server,
             desired_capabilities=DesiredCapabilities.CHROME)
-#        self.driver.set_window_size(self.x, self.y)
+        self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
     def setup_logger(self,filepath):
@@ -92,47 +96,46 @@ class MakeList(unittest.TestCase):
         driver = self.driver
         # self.setup_logger(None)
         driver = self.driver
-        for pref in self.pref_list:
-            fpath = self.pref_json #　県別 市区町村を読む
-            if os.path.exists(fpath):
-                with open(fpath, "r") as f:
-                    pref_json = json.load(f)
-                    for url in pref_json:
-                        self.setup_logger(self.tmp_pref_csv % url['id'])
-#                        print( self.base_url % url['id'] )
+        fpath = self.pref_json #　県別 市区町村を読む
+        if os.path.exists(fpath):
+            with open(fpath, "r") as f:
+                pref_json = json.load(f)
+                for url in pref_json:
+                    self.setup_logger(self.tmp_pref_csv % url['id'])
+#                    print( self.base_url % url['id'] )
+                    driver.get( self.base_url % url['id'] )
+                    time.sleep(2)
+                    city_cnt = 0 # 最大５つまでチェック（市区町村）
+#                    print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
+                    city_list = []
+                    city_idx = 0
+                    for city in url['city']:
                         driver.get( self.base_url % url['id'] )
-                        time.sleep(2)
-                        city_cnt = 0 # 最大５つまでチェック（市区町村）
-#                        print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
-                        city_list = []
-                        city_idx = 0
-                        for city in url['city']:
-                            driver.get( self.base_url % url['id'] )
-                            print("append:" + city['id'])
-                            city_list.append(city['id'])
-                            if len(city_list) == self.city_max:
-                                self.click_city(city_list)
-#                                driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                                time.sleep(2)
-#                                driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
-                                time.sleep(1)
-                                self.collect_link()
-                                print('init city_list')
-                                city_list = []
-#                            else:
-#                                print("append:" + city['id'])
-#                                city_list.append(city['id'])
-                            city_idx += 1
-                        if len(city_list) > 0:
-                                self.click_city(city_list)
-#                                driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                                time.sleep(2)
-                                self.collect_link()
-                                # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
-                                city_list = []
-            else:
-                print('%s is not exists.' % csv_path)
-                pass
+                        print("append:" + city['id'])
+                        city_list.append(city['id'])
+                        if len(city_list) == self.city_max:
+                            self.click_city(city_list)
+#                            driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
+#                            time.sleep(2)
+#                            driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                            time.sleep(1)
+                            self.collect_link()
+                            print('init city_list')
+                            city_list = []
+#                        else:
+#                            print("append:" + city['id'])
+#                            city_list.append(city['id'])
+                        city_idx += 1
+                    if len(city_list) > 0:
+                            self.click_city(city_list)
+#                            driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
+#                            time.sleep(2)
+                            self.collect_link()
+                            # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                            city_list = []
+        else:
+            print('%s is not exists.' % fpath)
+            pass
 
     def test_scrape_agent(self):
         print('start scrape fax')
@@ -170,7 +173,7 @@ class MakeList(unittest.TestCase):
         print(city_list)
         driver = self.driver
         iframe = driver.find_element_by_css_selector('#fancybox-frame')
-        driver.switch_to_frame(iframe)
+        driver.switch_to.frame(iframe)
         for c in city_list:
             driver.find_element_by_id(c).click() # 市区町村をclick
 
@@ -202,9 +205,17 @@ class MakeList(unittest.TestCase):
             paginate = soup.select(self.css_next_link)
             if paginate:
                 time.sleep(1)
+#                element.click()
 #                driver.find_element_by_css_selector(self.css_next_link).click()
+#                try:
+#                    driver.find_element_by_css_selector(self.css_next_link).click()
+#                except OSError as err:
+#                    print("OS error: {0}".format(err))
                 try:
-                    driver.find_element_by_css_selector(self.css_next_link).click()
+                    #driver.find_element_by_css_selector(self.css_next_link)
+                    element = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, self.css_next_link)))
+                    element.click()                
                 except OSError as err:
                     print("OS error: {0}".format(err))
                 self.collect_link()
