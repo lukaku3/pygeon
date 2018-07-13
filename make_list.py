@@ -28,7 +28,7 @@ class MakeList(unittest.TestCase):
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
-    pref_list = {'27':'大阪'}
+    pref_list = {'12':'千葉','11':'埼玉','14':'神奈川','27':'大阪','13':'東京'}
     default_log = 'test.log'
 #    pref_json = 'pref.json'
     pref_json = 'pref11.json'
