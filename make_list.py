@@ -108,7 +108,7 @@ class MakeList(unittest.TestCase):
                         self.click_city(city_list)
 #                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
 #                        time.sleep(2)
-                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+#                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                         time.sleep(1)
                         self.collect_link()
                         print('init city_list')
@@ -116,14 +116,13 @@ class MakeList(unittest.TestCase):
 #                    else:
 #                        print("append:" + city['id'])
 #                        city_list.append(city['id'])
-
                     city_idx += 1
                 if len(city_list) > 0:
                         self.click_city(city_list)
 #                        driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
 #                        time.sleep(2)
                         self.collect_link()
-                        driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                        # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                         city_list = []
         pass
 
@@ -134,7 +133,6 @@ class MakeList(unittest.TestCase):
         for pref in self.pref_list:
             driver.get( self.base_url % pref )
             self.setup_logger(self.agent_csv % pref)
-
             csv_path = self.tmp_pref_csv % pref
             if os.path.exists(csv_path):
                 with open(csv_path,  newline='') as f:
