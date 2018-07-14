@@ -111,7 +111,8 @@ class MakeList(unittest.TestCase):
             with open(fpath, "r") as f:
                 pref_json = json.load(f)
                 for url in pref_json:
-                    self.setup_logger(self.tmp_pref_csv % url['id'])
+                    # self.setup_logger(self.tmp_pref_csv % url['id'])
+                    f = open(self.tmp_pref_csv % pref,'a')
 #                    print( self.base_url % url['id'] )
                     driver.get( self.base_url % url['id'] )
                     time.sleep(2)
@@ -129,7 +130,7 @@ class MakeList(unittest.TestCase):
 #                            time.sleep(2)
 #                            driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                             time.sleep(1)
-                            self.collect_link()
+                            self.collect_link(f)
                             print('init city_list')
                             city_list = []
 #                        else:
@@ -140,9 +141,10 @@ class MakeList(unittest.TestCase):
                             self.click_city(city_list)
 #                            driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
 #                            time.sleep(2)
-                            self.collect_link()
+                            self.collect_link(f)
                             # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
                             city_list = []
+                    f.close()
         else:
             print('%s is not exists.' % fpath)
             pass
@@ -193,7 +195,7 @@ class MakeList(unittest.TestCase):
         driver.switch_to_default_content()
 
 
-    def collect_link(self):
+    def collect_link(self,f):
         driver = self.driver
         logging = self.logging
         # driver.switch_to_default_content()
@@ -205,7 +207,8 @@ class MakeList(unittest.TestCase):
             if t.find('a').string is not None:
                 url.append(t.find('a').get('href'))
                 url.append(t.find('a').string)
-                self.logging.info( ','.join(url) )
+                f.writerow( url )
+#                self.logging.info( ','.join(url) )
 #            url.append(t.find('a').get('href'))
 #            if t.find('a').string:
 #                url.append(t.find('a').string)
