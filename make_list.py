@@ -9,6 +9,7 @@ import requests
 import pprint
 import json
 import time
+import nose.tools as nose
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,23 +29,22 @@ class MakeList(unittest.TestCase):
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
 #    pref_list = {'13':'東京','12':'千葉','11':'埼玉','14':'神奈川','27':'大阪'}
-    pref_list = {'12':'千葉','11':'埼玉','14':'神奈川','27':'大阪','13':'東京'}
+    pref_list = {'11':'埼玉','12':'千葉','14':'神奈川','27':'大阪','13':'東京'}
     default_log = 'test.log'
-#    pref_json = 'pref.json'
     pref_json = 'pref%s.json'
-#    pref_json = 'pref%s.json' #pref.jsonを分けたい場合
     tmp_pref_csv = 'tmp%s.csv'
     agent_csv    = 'agents%s.csv'
     city_max  = 5
     css_search_btn = 'body > div.dialogBody > div.box.align-center.clearfix.PIE > button.button.button-bordered.button-royal.PIE'
     css_next_link = 'div.pagination.align-center > ol > li.next > a'
-    next_a1 = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
-    next_a2 = '#container > div.main.right > div:nth-child(7) > div:nth-child(1) > div > ol > li.next > a'
+#    next_a1 = '#container > div.main.right > div:nth-child(2) > div:nth-child(2) > div > ol > li.next > a'
+#    css_next_link = '#container > div.main.right > div:nth-child(7) > div:nth-child(1) > div > ol > li.next > a'
     x = 1024
     y = 768
     browser_path = '/usr/bin/google-chrome'
 
     def setUp(self):
+        self.pref_list = self.get_pref_list()
 #        self.driver = webdriver.Remote(
 #           command_executor= self.selenium_server,
 #            desired_capabilities=DesiredCapabilities.CHROME)
@@ -54,7 +54,13 @@ class MakeList(unittest.TestCase):
         opts.add_argument('--disable-gpu')
         opts.add_argument('--no-sandbox')
         self.driver = webdriver.Chrome(chrome_options=opts)
-
+#        user_agent = 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36'
+#        pjs_path = 'node_modules/phantomjs/bin/phantomjs'
+#        dcap = {
+#                    "phantomjs.page.settings.userAgent" : user_agent,
+#                        'marionette' : True
+#                        }
+#        self.driver = webdriver.PhantomJS(executable_path=pjs_path, desired_capabilities=dcap)
         self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
@@ -71,6 +77,15 @@ class MakeList(unittest.TestCase):
 #                              '%(message)s')
 #        fh.setFormatter(formatter)
         self.logging.addHandler(fh)
+
+    def get_pref_list(self):
+        args = sys.argv[2:]
+        new_list = {}
+        if len(args):
+            for arg in args:
+                if arg in self.pref_list.keys():
+                    new_list[arg] = arg
+        return new_list
 
     def test_make_list(self):
         print('start make pref.json')
@@ -102,52 +117,77 @@ class MakeList(unittest.TestCase):
             f.close()
 
     def test_scrape_detail_link(self):
-        print('start scrape url')
         driver = self.driver
         # self.setup_logger(None)
-        driver = self.driver
-        fpath = self.pref_json #　県別 市区町村を読む
-        if os.path.exists(fpath):
-            with open(fpath, "r") as f:
-                pref_json = json.load(f)
-                for url in pref_json:
-                    # self.setup_logger(self.tmp_pref_csv % url['id'])
-                    f = open(self.tmp_pref_csv % pref,'a')
-#                    print( self.base_url % url['id'] )
-                    driver.get( self.base_url % url['id'] )
+        for pref in self.pref_list.keys():
+            fpath = self.pref_json % pref
+            if os.path.exists(fpath): #　県別 市区町村を開く
+                tmp_f = open(self.tmp_pref_csv % pref,'a')
+                self.tmp_f = None
+                self.tmp_f = writer = csv.writer(tmp_f)
+                with open(fpath, "r") as f:
+                    pref = json.load(f)
+#                    for url in pref_json:
+#                    driver.get( self.base_url % pref['id'] )
                     time.sleep(2)
                     city_cnt = 0 # 最大５つまでチェック（市区町村）
-#                    print( "pref:%s, city length:%s" % (url['id'] , len(url['city'])))
                     city_list = []
-                    city_idx = 0
-                    for city in url['city']:
-                        driver.get( self.base_url % url['id'] )
-                        print("append:" + city['id'])
+                    for city in pref['city']:
+                        driver.get( self.base_url % pref['id'] )
                         city_list.append(city['id'])
                         if len(city_list) == self.city_max:
-                            self.click_city(city_list)
-#                            driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                            time.sleep(2)
-#                            driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                            print(city_list)
                             time.sleep(1)
-                            self.collect_link(f)
+                            self.click_city(city_list)
+                            self.collect_link()
                             print('init city_list')
                             city_list = []
-#                        else:
-#                            print("append:" + city['id'])
-#                            city_list.append(city['id'])
-                        city_idx += 1
+                        else:
+                            pass
                     if len(city_list) > 0:
                             self.click_city(city_list)
-#                            driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
-#                            time.sleep(2)
-                            self.collect_link(f)
-                            # driver.save_screenshot('./screenshots/%s_%s.png' % (url['id'], city_idx) )
+                            self.collect_link()
                             city_list = []
-                    f.close()
+
+                tmp_f.close()
+            else:
+                print('%s is not exists.' % fpath)
+#                tmp_f.close()
         else:
-            print('%s is not exists.' % fpath)
-            pass
+            pass # for  pref in self.pref_list.keys()
+        print('end loop')
+
+#        fpath = self.pref_json #　県別 市区町村を読む
+#        if os.path.exists(fpath):
+#            with open(fpath, "r") as f:
+#                pref_json = json.load(f)
+#                for url in pref_json:
+#                    # self.setup_logger(self.tmp_pref_csv % url['id'])
+#                    f = open(self.tmp_pref_csv % pref,'a')
+#                    driver.get( self.base_url % url['id'] )
+#                    time.sleep(2)
+#                    city_cnt = 0 # 最大５つまでチェック（市区町村）
+#                    city_list = []
+#                    city_idx = 0
+#                    for city in url['city']:
+#                        driver.get( self.base_url % url['id'] )
+#                        print("append:" + city['id'])
+#                        city_list.append(city['id'])
+#                        if len(city_list) == self.city_max:
+#                            self.click_city(city_list)
+#                            time.sleep(1)
+#                            print('init city_list')
+#                            self.collect_link(f)
+#                            city_list = []
+#                        city_idx += 1
+#                    if len(city_list) > 0:
+#                            self.click_city(city_list)
+#                            self.collect_link(f)
+#                            city_list = []
+#                    f.close()
+#        else:
+#            print('%s is not exists.' % fpath)
+#            pass
 
     def test_scrape_agent(self):
         print('start scrape fax')
@@ -182,23 +222,23 @@ class MakeList(unittest.TestCase):
 
 
     def click_city(self, city_list):
-        print(city_list)
         driver = self.driver
         iframe = driver.find_element_by_css_selector('#fancybox-frame')
         driver.switch_to.frame(iframe)
         for c in city_list:
             driver.find_element_by_id(c).click() # 市区町村をclick
 
+#        driver.save_screenshot('screenshots/1.png')
         driver.find_element_by_css_selector(self.css_search_btn).click() # 検索btnをクリック
         time.sleep(1)
         Select(driver.find_element_by_css_selector('select.displayCount')).select_by_value('50')
-        driver.switch_to_default_content()
+        driver.switch_to.default_content()
 
 
-    def collect_link(self,f):
+    def collect_link(self):
         driver = self.driver
-        logging = self.logging
-        # driver.switch_to_default_content()
+#        logging = self.logging
+#        driver.switch_to_default_content()
         time.sleep(1)
         soup = BeautifulSoup(driver.page_source, "lxml")
         tbl = soup.find_all('table')
@@ -207,7 +247,9 @@ class MakeList(unittest.TestCase):
             if t.find('a').string is not None:
                 url.append(t.find('a').get('href'))
                 url.append(t.find('a').string)
-                f.writerow( url )
+#                print(','.join(url))
+#                f.writerows( url )
+                self.tmp_f.writerow( url )
 #                self.logging.info( ','.join(url) )
 #            url.append(t.find('a').get('href'))
 #            if t.find('a').string:
@@ -216,20 +258,17 @@ class MakeList(unittest.TestCase):
 
         else:
             paginate = soup.select(self.css_next_link)
-            if paginate:
+            if len(paginate) > 0:
                 time.sleep(1)
 #                element.click()
 #                driver.find_element_by_css_selector(self.css_next_link).click()
-#                try:
-#                    driver.find_element_by_css_selector(self.css_next_link).click()
-#                except OSError as err:
-#                    print("OS error: {0}".format(err))
                 try:
                     #driver.find_element_by_css_selector(self.css_next_link)
                     element = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, self.css_next_link)))
                     element.click()
                 except OSError as err:
+                    driver.save_screenshot('screenshots/paginate_err.png')
                     print("OS error: {0}".format(err))
                 self.collect_link()
             else:
