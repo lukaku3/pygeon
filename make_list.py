@@ -24,7 +24,8 @@ from selenium.webdriver.chrome.options import Options
 
 class MakeList(unittest.TestCase):
 
-    selenium_server = 'http://localhost:4444/wd/hub'
+#    selenium_server = 'http://localhost:4444/wd/hub'
+    selenium_server = 'http://192.168.33.1:4444/wd/hub'
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
@@ -44,16 +45,16 @@ class MakeList(unittest.TestCase):
     browser_path = '/usr/bin/google-chrome'
 
     def setUp(self):
-        self.pref_list = self.get_pref_list()
-#        self.driver = webdriver.Remote(
-#           command_executor= self.selenium_server,
-#            desired_capabilities=DesiredCapabilities.CHROME)
-        opts = Options()
-        opts.binary_location = self.browser_path
-        opts.add_argument('--headless')
-        opts.add_argument('--disable-gpu')
-        opts.add_argument('--no-sandbox')
-        self.driver = webdriver.Chrome(chrome_options=opts)
+        self.get_pref_list()
+        self.driver = webdriver.Remote(
+           command_executor= self.selenium_server,
+            desired_capabilities=DesiredCapabilities.CHROME)
+#        opts = Options()
+#        opts.binary_location = self.browser_path
+#        opts.add_argument('--headless')
+#        opts.add_argument('--disable-gpu')
+#        opts.add_argument('--no-sandbox')
+#        self.driver = webdriver.Chrome(chrome_options=opts)
 #        user_agent = 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36'
 #        pjs_path = 'node_modules/phantomjs/bin/phantomjs'
 #        dcap = {
@@ -85,7 +86,7 @@ class MakeList(unittest.TestCase):
             for arg in args:
                 if arg in self.pref_list.keys():
                     new_list[arg] = arg
-        return new_list
+            self.pref_list = new_list
 
     def test_make_list(self):
         print('start make pref.json')
