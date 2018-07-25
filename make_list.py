@@ -24,8 +24,8 @@ from selenium.webdriver.chrome.options import Options
 
 class MakeList(unittest.TestCase):
 
-#    selenium_server = 'http://localhost:4444/wd/hub'
-    selenium_server = 'http://192.168.33.1:4444/wd/hub'
+    selenium_server = 'http://localhost:4444/wd/hub'
+#    selenium_server = 'http://192.168.33.1:4444/wd/hub'
     base_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/#!pref=%s'
     detail_url = 'http://www.hatomarksite.com%s'
     dialog_url = 'http://www.hatomarksite.com/search/zentaku/agent/area/dialog/syz?pref='
@@ -46,15 +46,15 @@ class MakeList(unittest.TestCase):
 
     def setUp(self):
         self.get_pref_list()
-        self.driver = webdriver.Remote(
-           command_executor= self.selenium_server,
-            desired_capabilities=DesiredCapabilities.CHROME)
-#        opts = Options()
-#        opts.binary_location = self.browser_path
-#        opts.add_argument('--headless')
-#        opts.add_argument('--disable-gpu')
-#        opts.add_argument('--no-sandbox')
-#        self.driver = webdriver.Chrome(chrome_options=opts)
+#        self.driver = webdriver.Remote(
+#           command_executor= self.selenium_server,
+#            desired_capabilities=DesiredCapabilities.CHROME)
+        opts = Options()
+        opts.binary_location = self.browser_path
+        opts.add_argument('--headless')
+        opts.add_argument('--disable-gpu')
+        opts.add_argument('--no-sandbox')
+        self.driver = webdriver.Chrome(executable_path=os.path.abspath("chromedriver"), chrome_options=opts)
 #        user_agent = 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36'
 #        pjs_path = 'node_modules/phantomjs/bin/phantomjs'
 #        dcap = {
@@ -146,6 +146,7 @@ class MakeList(unittest.TestCase):
                         else:
                             pass
                     if len(city_list) > 0:
+                            print(city_list)
                             self.click_city(city_list)
                             self.collect_link()
                             city_list = []
@@ -206,15 +207,19 @@ class MakeList(unittest.TestCase):
                         driver.get( self.detail_url % row[0] )
                         time.sleep(1)
                         soup = BeautifulSoup(driver.page_source, "lxml")
-                        tbl = soup.find('table').find_all('td')
-                        detail = []
-                        detail.append(tbl[0])
-                        detail.append(tbl[1])
-                        detail.append(tbl[2])
-                        detail.append(tbl[7])
-                        detail.append(tbl[8])
-                        detail_str = ",".join(map(str,detail))
-                        self.logging.info( re.sub( r'<((/|)td|td\scolspan="[0-9]")>', '', detail_str) )
+                        try:
+                            tbl = soup.find('table').find_all('td')
+                            detail = []
+                            detail.append(tbl[0])
+                            detail.append(tbl[1])
+                            detail.append(tbl[2])
+                            detail.append(tbl[7])
+                            detail.append(tbl[8])
+                            detail_str = ",".join(map(str,detail))
+                            self.logging.info( re.sub( r'<((/|)td|td\scolspan="[0-9]")>', '', detail_str) )
+                        except:
+                            print("%s is not exists." % row[0])
+                            pass
                     else:
                         f.close()
             else:
@@ -259,6 +264,7 @@ class MakeList(unittest.TestCase):
 
         else:
             paginate = soup.select(self.css_next_link)
+            print(paginate)
             if len(paginate) > 0:
                 time.sleep(1)
 #                element.click()
