@@ -117,6 +117,22 @@ class MakeList(unittest.TestCase):
             json.dump(pref_json, f)
             f.close()
 
+
+    def test_switch_window(self):
+        driver = self.driver
+        driver.get( 'https://www.yahoo.com' )
+        # set 'python' to #uh-search-box
+        driver.find_element_by_name('p').send_keys('Selenium Python3')
+        driver.find_element_by_name('p').send_keys(Keys.ENTER)
+        #driver.send_keys(Keys.ENTER)
+        time.sleep(2)
+        driver.find_element_by_css_selector('#web > ol > li:nth-child(1) > div > div > h3 > a').click()
+        pprint.pprint( driver.title )
+        driver.switch_to.window( driver.window_handles[1] ) # go next window
+        pprint.pprint( driver.title )
+        driver.switch_to.window( driver.window_handles[0] ) # go back window
+        pprint.pprint( driver.title )
+
     def test_scrape_detail_link(self):
         driver = self.driver
         # self.setup_logger(None)
