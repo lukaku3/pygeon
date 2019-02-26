@@ -46,22 +46,18 @@ class MakeList(unittest.TestCase):
 
     def setUp(self):
         self.get_pref_list()
+#----- launch visible        
 #        self.driver = webdriver.Remote(
 #           command_executor= self.selenium_server,
 #            desired_capabilities=DesiredCapabilities.CHROME)
+#----- launch background start
         opts = Options()
         opts.binary_location = self.browser_path
         opts.add_argument('--headless')
         opts.add_argument('--disable-gpu')
         opts.add_argument('--no-sandbox')
         self.driver = webdriver.Chrome(executable_path=os.path.abspath("chromedriver"), chrome_options=opts)
-#        user_agent = 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36'
-#        pjs_path = 'node_modules/phantomjs/bin/phantomjs'
-#        dcap = {
-#                    "phantomjs.page.settings.userAgent" : user_agent,
-#                        'marionette' : True
-#                        }
-#        self.driver = webdriver.PhantomJS(executable_path=pjs_path, desired_capabilities=dcap)
+#----end
         self.driver.set_window_size(self.x, self.y)
         self.driver.implicitly_wait(10)
 
